@@ -1,9 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using System;
 
-
-// PROBLEMS: NEED TO UPDATE DURING REGULAR COROUTINES
-// HAVE TO SUPPORT CUSTOM YIELD INSTRUCTIONS
 namespace Kore.Coroutines.Examples
 {
     public class NestedExample : MonoBehaviour
@@ -24,23 +22,31 @@ namespace Kore.Coroutines.Examples
         IEnumerator Example()
         {
             var cube = Instantiate( cubePrefab, transform.position, Quaternion.identity) as GameObject;
-            
+            var cubepos = cube.transform;
+
             for(int i=0; i<5; i++)
             {
                 float advancement = 0;
-                Vector3 pos = transform.position;
+                Vector3 pos = cubepos.position;
+
                 while (advancement < 2)
                 {
                     advancement += Time.deltaTime;
-                    Vector3 pos2 = pos;
-                    pos2.x += advancement;
-
-                    transform.position = pos2;
+                    cubepos.position = new Vector3( pos.x+advancement, pos.y, pos.z);
                     yield return null;
                 }
 
+                yield return Coroutine.Nested( ShotBullet());
+
             }
+
+            Destroy( cube);
+            RestartAnimation();
         }
 
+        private IEnumerator ShotBullet()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
