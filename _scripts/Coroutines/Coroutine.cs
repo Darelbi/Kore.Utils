@@ -1,6 +1,7 @@
 // Author: Dario Oliveri
 // License Copyright 2016 (c) Dario Oliveri
 
+using Kore.Utils;
 using System.Collections;
 
 namespace Kore.Coroutines
@@ -11,6 +12,8 @@ namespace Kore.Coroutines
     /// </summary>
     public static class Coroutine
     {
+        private static MiniPool< CoroutineNestedYieldable> nestedPool = new MiniPool< CoroutineNestedYieldable>( 2);
+
         public static void Run( IEnumerator enumerator, Method method = Method.Update)
         {
             CoroutineCore.Instance.Run( enumerator, method);
@@ -18,21 +21,24 @@ namespace Kore.Coroutines
 
         public static IYieldable Nested( IEnumerator enumerator)
         {
-            return new CoroutineNestedYieldable( enumerator);
+            var item = nestedPool.Current();
+            item.Nested = enumerator;
+            return item;
         }
     }
 
     internal class CoroutineNestedYieldable: IYieldable
     {
-        IEnumerator _nested;
-        public CoroutineNestedYieldable( IEnumerator nested)
-        {
-            _nested = nested;
-        }
+        public IEnumerator Nested;
 
         public void OnYield( ICoroutineEngine engine)
         {
-            engine.PushOverCurrent( _nested);
+            engine.PushOverCurrent( Nested);
+        }
+
+        public void Reset()
+        {
+            Nested = null;
         }
     }
 }

@@ -2,57 +2,42 @@
 // License Copyright 2016 (c) Dario Oliveri
 
 using System.Collections;
+using Kore.Utils;
 
 namespace Kore.Coroutines
 {
     public static class State 
     {
+        private static MiniPool< StateChangeYieldable> changePool = new MiniPool< StateChangeYieldable>(2);
+
         public static IYieldable Change( IEnumerator state)
         {
-            return new StateChangeYieldable( state);
+            var item = changePool.Current();
+            item.NextState = state;
+            return item;
         }
 
         // Allows fine control over states to squize maximum performance
         public static StateCache Cache()
         {
+            //statefull and persistent object handled by users, cannot get
+            //it from a pool, but they can use a pool for it if they want.
             return new StateCache();
         }
     }
 
-    internal class StateChangeYieldable : IYieldable
+    internal class StateChangeYieldable : IYieldable, IPoolable
     {
-        IEnumerator _nextState;
-
-        public StateChangeYieldable( IEnumerator nextState)
-        {
-            _nextState = nextState;
-        }
+        public IEnumerator NextState;
 
         public void OnYield( ICoroutineEngine engine)
         {
-            engine.ReplaceCurrentWith( _nextState);
-        }
-    }
-
-    internal class StateEnterYieldable : IYieldable
-    {
-        public delegate void EnterCallback();
-
-        EnterCallback _callback;
-        bool executed;
-
-        public StateEnterYieldable( EnterCallback callback)
-        {
-            _callback = callback;
+            engine.ReplaceCurrentWith( NextState);
         }
 
-        public void OnYield( ICoroutineEngine engine)
+        public void Reset()
         {
-            if (executed)
-                return;
-
-            _callback();
-            executed = true;
+            NextState = null;
         }
     }
 }
