@@ -11,6 +11,12 @@ namespace Kore.Coroutines
         {
             return new StateChangeYieldable( state);
         }
+
+        // Allows fine control over states to squize maximum performance
+        public static StateCache Cache()
+        {
+            return new StateCache();
+        }
     }
 
     internal class StateChangeYieldable : IYieldable
@@ -25,6 +31,28 @@ namespace Kore.Coroutines
         public void OnYield( ICoroutineEngine engine)
         {
             engine.ReplaceCurrentWith( _nextState);
+        }
+    }
+
+    internal class StateEnterYieldable : IYieldable
+    {
+        public delegate void EnterCallback();
+
+        EnterCallback _callback;
+        bool executed;
+
+        public StateEnterYieldable( EnterCallback callback)
+        {
+            _callback = callback;
+        }
+
+        public void OnYield( ICoroutineEngine engine)
+        {
+            if (executed)
+                return;
+
+            _callback();
+            executed = true;
         }
     }
 }
