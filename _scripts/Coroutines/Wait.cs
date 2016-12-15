@@ -17,7 +17,6 @@ namespace Kore.Coroutines
     internal class WaitForYieldable : IYieldable, ICustomYield
     {
         float _timeToWait;
-        ICoroutineEngine _engine;
 
         public WaitForYieldable( float timeToWait)
         {
@@ -31,7 +30,6 @@ namespace Kore.Coroutines
 
         public void OnYield( ICoroutineEngine engine)
         {
-            _engine = engine;
             engine.RegisterCustomYield( this);
         }
 

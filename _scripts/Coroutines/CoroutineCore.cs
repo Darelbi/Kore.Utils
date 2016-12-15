@@ -3,6 +3,7 @@
 
 using Kore.Utils;
 using System.Collections;
+using UnityEngine;
 
 namespace Kore.Coroutines
 {
@@ -13,7 +14,7 @@ namespace Kore.Coroutines
         {
             base.Init();
             CreateCoroutineRunners();
-            coroutineCoreRunning = true;
+            StartRunners();
         }
 
         public override void OnDestroyCalled()
@@ -28,6 +29,8 @@ namespace Kore.Coroutines
         CoroutineEngine updateRunner;
         CoroutineEngine fixedRunner;
         CoroutineEngine lateRunner;
+        WaitForFixedUpdate waitFixed;
+        WaitForEndOfFrame waitLate;
 
         private void CreateCoroutineRunners()
         {
@@ -36,24 +39,44 @@ namespace Kore.Coroutines
             lateRunner = new CoroutineEngine( Method.LateUpdate);
         }
 
+        // Use Unity coroutines to keep a execution order consistent with old Unity Coroutines
+        private void StartRunners()
+        {
+            waitFixed = new WaitForFixedUpdate();
+            waitLate = new WaitForEndOfFrame();
+            coroutineCoreRunning = true;
+            StartCoroutine( UpdateCoroutine());
+            StartCoroutine( FixedCoroutine());
+            StartCoroutine( LateCoroutine());
+        }
+
         bool coroutineCoreRunning;
 
-        protected void Update()
+        protected IEnumerator UpdateCoroutine()
         {
-            if (coroutineCoreRunning)
+            while (coroutineCoreRunning)
+            {
+                yield return null;
                 updateRunner.Tick();
+            }
         }
 
-        protected void FixedUpdate()
+        protected IEnumerator FixedCoroutine()
         {
-            if (coroutineCoreRunning)
+            while (coroutineCoreRunning)
+            {
+                yield return waitFixed;
                 fixedRunner.Tick();
+            }
         }
 
-        protected void LateUpdate()
+        protected IEnumerator LateCoroutine()
         {
-            if (coroutineCoreRunning)
+            while (coroutineCoreRunning)
+            {
+                yield return waitLate;
                 lateRunner.Tick();
+            }
         }
 
         public void Run( IEnumerator enumerator, Method method)

@@ -3,6 +3,7 @@
 
 using Kore.Utils;
 using System.Collections;
+using UnityEngine;
 
 namespace Kore.Coroutines
 {
@@ -29,27 +30,25 @@ namespace Kore.Coroutines
         public void PushOverCurrent( IEnumerator nested)
         {
             var toBeRestored = _current.enumerator;
-            var node = _current;
-            _current.enumerator = WrapCoroutine( node, nested, toBeRestored);
+            _current.enumerator = WrapCoroutine( nested, toBeRestored);
         }
 
-        private IEnumerator WrapCoroutine( Node node, IEnumerator nested, IEnumerator toBeRestored)
+        private IEnumerator WrapCoroutine( IEnumerator nested, IEnumerator toBeRestored)
         {
             while ( nested.MoveNext())
                 yield return nested.Current;
 
-            node.enumerator = toBeRestored;
+            _current.enumerator = toBeRestored;
             yield return null;
         }
 
-        public void RegisterCustomYield(ICustomYield customYield)
+        public void RegisterCustomYield( ICustomYield customYield)
         {
             var toBeRestored = _current.enumerator;
-            var node = _current;
-            _current.enumerator = CustomYieldCoroutine( node, customYield, toBeRestored);
+            _current.enumerator = CustomYieldCoroutine( customYield, toBeRestored);
         }
 
-        private IEnumerator CustomYieldCoroutine( Node node, ICustomYield customYield, IEnumerator toBeRestored)
+        private IEnumerator CustomYieldCoroutine( ICustomYield customYield, IEnumerator toBeRestored)
         {
             while (customYield.HasDone() == false)
             {
@@ -57,13 +56,28 @@ namespace Kore.Coroutines
                 customYield.Update( _method);
             }
 
-            node.enumerator = toBeRestored;
+            _current.enumerator = toBeRestored;
             yield return null;
         }
 
         public void ReplaceCurrentWith( IEnumerator nextState)
         {
             _current.enumerator = nextState;
+        }
+
+        private void RegisterLegacyCustomYield ( IEnumerator customYield)
+        {
+            var toBeRestored = _current.enumerator;
+            _current.enumerator = LegacyCustomYieldCoroutine( customYield, toBeRestored);
+        }
+
+        private IEnumerator LegacyCustomYieldCoroutine( IEnumerator customYield, IEnumerator toBeRestored)
+        {
+            while (customYield.MoveNext())
+                yield return null;
+
+            _current.enumerator = toBeRestored;
+            yield return null;
         }
 
         public void Run( IEnumerator enumerator)
@@ -94,8 +108,21 @@ namespace Kore.Coroutines
                 {
                     if (e.Current != null)
                     {
-                        var y = ( IYieldable)e.Current;
-                        y.OnYield( this);
+                        if( e.Current is IEnumerator)
+                        {
+                            // Keep compatibility with Cystom yield instructions (because
+                            // those are used in many frameworks, like DOTween)
+                            RegisterLegacyCustomYield( (IEnumerator)e.Current);
+                            if (e.Current is IYieldable)
+                                Debug.LogWarning(
+                                            "Warning: implemented both IYieldable and IEnumerator:"
+                                           +"you cannot implement both (class: "+ e.GetType().Name+" )");
+                        }
+                        else
+                        {
+                            var y = (IYieldable)e.Current;
+                            y.OnYield(this);
+                        }
                     }
                     _previous = _current;
                     _current = _current._next;
