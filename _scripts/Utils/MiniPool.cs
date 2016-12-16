@@ -29,12 +29,10 @@ namespace Kore.Utils
             T obj;
 
             if( pool.Count == 0)
-                obj = new T();
+                (obj = new T()).Reset();
 
             else
                 obj = pool.Pop();                
-
-            obj.Reset();
 
             return obj;
         }
@@ -47,17 +45,20 @@ namespace Kore.Utils
         public T Current()
         {
             if (pool.Count == 0)
-                pool.Push( new T());
+            {
+                T temp = new T();
+                temp.Reset();
+                pool.Push( temp);
+            }
 
             T obj = pool.Peek();
-
-            obj.Reset();
 
             return obj;
         }
 
         public void Release( T item)
         {
+            item.Reset();
             pool.Push( item);
         }
     }
