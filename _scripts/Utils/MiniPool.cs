@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Kore.Utils
 {
@@ -12,7 +13,8 @@ namespace Kore.Utils
     {
         // Stack is slightly faster than a Queue: I guess because Pushing/Popping
         // from a stack access the same memory location, thus has slightly more
-        // cache locality than a Queue (which access 2 different memory locations).
+        // cache locality than a Queue (which access 2 different 
+        // memory locations and eventually jump back when reach end of array).
         Stack<T> pool;
 
         public MiniPool( int initialCapacity = 2)
@@ -25,9 +27,13 @@ namespace Kore.Utils
         /// </summary>
         public T Acquire()
         {
-            T obj = 
-                pool.Count == 0 ?
-                    new T() : pool.Pop();
+            T obj;
+
+            if( pool.Count == 0)
+                obj = new T();
+
+            else
+                obj = pool.Pop();                
 
             obj.Reset();
 

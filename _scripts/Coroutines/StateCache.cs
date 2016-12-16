@@ -30,7 +30,7 @@ namespace Kore.Coroutines
         public IYieldable Change( IEnumerator nextState)
         {
             executed = false;
-            _change._nextState = nextState;
+            _change.NextState = nextState;
             return _change;
         }
 
@@ -38,18 +38,23 @@ namespace Kore.Coroutines
         {
             executed = false;
             onExitState();
-            _change._nextState = nextState;
+            _change.NextState = nextState;
             return _change;
         }
     }
 
     internal class CachedStateChangeYieldable : IYieldable
     {
-        public IEnumerator _nextState;
+        public IEnumerator NextState;
 
         public void OnYield( ICoroutineEngine engine)
         {
-            engine.ReplaceCurrentWith(_nextState);
+            engine.ReplaceCurrentWith( NextState);
+        }
+
+        public void Reset()
+        {
+            NextState = null;
         }
     }
 }

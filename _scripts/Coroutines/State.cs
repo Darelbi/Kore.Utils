@@ -8,7 +8,7 @@ namespace Kore.Coroutines
 {
     public static class State 
     {
-        private static MiniPool< StateChangeYieldable> changePool = new MiniPool< StateChangeYieldable>(2);
+        private static MiniPool< StateChangeYieldable> changePool = new MiniPool< StateChangeYieldable>(1);
 
         public static IYieldable Change( IEnumerator state)
         {

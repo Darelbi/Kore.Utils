@@ -12,7 +12,7 @@ namespace Kore.Coroutines
     /// </summary>
     public static class Coroutine
     {
-        private static MiniPool< CoroutineNestedYieldable> nestedPool = new MiniPool< CoroutineNestedYieldable>( 2);
+        private static MiniPool< CoroutineNestedYieldable> nestedPool = new MiniPool< CoroutineNestedYieldable>( 1);
 
         public static void Run( IEnumerator enumerator, Method method = Method.Update)
         {
