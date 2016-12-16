@@ -16,6 +16,11 @@ namespace Kore.Coroutines
             _change = new CachedStateChangeYieldable();
         }
 
+        public IYieldable EnterState()
+        {
+            return null;
+        }
+
         public IYieldable EnterState( KoreCallback onEnterState)
         {
             if (executed == false)

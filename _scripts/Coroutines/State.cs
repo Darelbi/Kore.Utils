@@ -17,6 +17,14 @@ namespace Kore.Coroutines
             return item;
         }
 
+        public static IYieldable Change( IEnumerator state, KoreCallback callback)
+        {
+            var item = changePool.Current();
+            callback();
+            item.NextState = state;
+            return item;
+        }
+
         // Allows fine control over states to squize maximum performance
         public static StateCache Cache()
         {
