@@ -1,3 +1,4 @@
+
 namespace Kore.Coroutines.Examples
 {
     public class WaitKeyPressed : IYieldable, ICustomYield
@@ -10,6 +11,11 @@ namespace Kore.Coroutines.Examples
         public void OnYield( ICoroutineEngine engine)
         {
             engine.RegisterCustomYield( this);
+        }
+
+        public void Reset()
+        {
+            
         }
 
         public void Update( Method method)

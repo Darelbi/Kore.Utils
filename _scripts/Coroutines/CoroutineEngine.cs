@@ -110,7 +110,7 @@ namespace Kore.Coroutines
                     {
                         if( e.Current is IEnumerator)
                         {
-                            // Keep compatibility with Cystom yield instructions (because
+                            // Keep compatibility with Custom yield instructions (because
                             // those are used in many frameworks, like DOTween)
                             RegisterLegacyCustomYield( (IEnumerator)e.Current);
                             if (e.Current is IYieldable)
