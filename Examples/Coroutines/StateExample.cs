@@ -15,7 +15,7 @@ namespace Kore.Coroutines.Examples
         {
             cube = Instantiate(cubePrefab, transform.position, Quaternion.identity) as GameObject;
 
-            Coroutine.Run( StateA());
+            Koroutine.Run( StateA());
         }
 
         IEnumerator StateA()

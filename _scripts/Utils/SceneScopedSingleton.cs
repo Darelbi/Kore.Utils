@@ -1,5 +1,6 @@
 // Author: Dario Oliveri
 // License Copyright 2016 (c) Dario Oliveri
+// https://github.com/Darelbi/Kore.Utils
 
 using UnityEngine;
 
@@ -13,7 +14,8 @@ namespace Kore.Utils
     /// access the instance from within an Awake() method the Awake of the instance 
     /// won't be called. I also provide a replacement OnDestroyCalled.
     /// </summary>
-    public class SceneScopedSingletonI< T, I> : MonoBehaviour, IInitiable where T : MonoBehaviour, I
+    public class SceneScopedSingletonI< T, I> : MonoBehaviour, IInitiable where T : MonoBehaviour, I, IInitiable
+        where I: class
     {
         public virtual void Init()
         {
@@ -22,46 +24,36 @@ namespace Kore.Utils
 
         public virtual void OnDestroyCalled()
         {
-
+            Instantiated = false;
+            instanceInterface = null;
         }
 
         // since T should be subclass of MonoBehaviour and I, and MonoBehaviour is a class
         // therefore I can only be a interface
-        private static I _instance = default(I);
+        private static I instanceInterface = null;
+
+        // flag to avoid null comparation check of monobeahviours (which is very expensive)
+        // this actually makes this class one of the fastest Singletons
+        private static bool Instantiated = false;
 
         public static I Instance
         {
             get
             {
-                if (_instance == null && _applicationIsQuitting == false)
+                if (Instantiated == false)
                 {
-                    _instance = SingletonInstance_SceneScoped.GO.AddComponent<T>();
-                    (_instance as IInitiable).Init();
-                    return _instance;
+                    Instantiated = true;
+                    instanceInterface = SingletonInstance_SceneScoped.GO.AddComponent<T>();
+                    (instanceInterface as IInitiable).Init();
+                    return instanceInterface;
                 }
 
-                return _instance;
+                return instanceInterface;
             }
-        }
-
-        private static bool _applicationIsQuitting = false;
-
-        /// <summary>
-        /// Forbid to access instance after OnDestroy is called, if some code
-        /// access instance then it gets null exception because it is doing obviously
-        /// something wrong.
-        /// </summary>
-        protected void OnDestroy() // protected so user get warning to use "new keyword" if 
-                                   // accidentally redeclaring the member:
-                                   // Instead the user should override "OnDestroyCalled"
-        {
-            _applicationIsQuitting = true;
-            (_instance as IInitiable).OnDestroyCalled();
-            _instance = default( I);
         }
     }
 
-    public class SceneScopedSingleton< T> : MonoBehaviour where T : MonoBehaviour, IInitiable
+    public class SceneScopedSingleton< T> : MonoBehaviour, IInitiable  where T : MonoBehaviour, IInitiable
     {
         public virtual void Init()
         {
@@ -70,41 +62,30 @@ namespace Kore.Utils
 
         public virtual void OnDestroyCalled()
         {
-
+            instanceConcrete = null;
+            Instantiated = false;
         }
 
-        private static T _instance = null;
+        private static T instanceConcrete = null;
 
         // flag to avoid null comparation check of monobeahviours (which is very expensive)
-        // this actually makes this class one of the fastest Singletons (not necessary on interfaces)
-        private static bool _instantiated = false;
+        // this actually makes this class one of the fastest Singletons
+        private static bool Instantiated = false;
 
         public static T Instance
         {
             get
             {
-                if (_instantiated == false && !_applicationIsQuitting)
+                if (Instantiated == false)
                 {
-                    _instantiated = true;
-                    _instance = SingletonInstance_SceneScoped.GO.AddComponent< T>();
-                    _instance.Init();
-                    return _instance;
+                    Instantiated = true;
+                    instanceConcrete = SingletonInstance_SceneScoped.GO.AddComponent< T>();
+                    instanceConcrete.Init();
+                    return instanceConcrete;
                 }
 
-                return _instance;
+                return instanceConcrete;
             }
-        }
-
-        private static bool _applicationIsQuitting = false;
-
-        protected void OnDestroy() // protected so user get warning to use "new keyword" if 
-                                   // accidentally redeclaring the member:
-                                   // Instead the user should override "OnDestroyCalled"
-        {
-            _applicationIsQuitting = true;
-            _instance.OnDestroyCalled();
-            _instance = null;
-            _instantiated = false;
         }
     }
 
@@ -114,34 +95,43 @@ namespace Kore.Utils
     /// </summary>
     internal class SingletonInstance_SceneScoped
     {
-        private static bool _instantiated = false;
+        private static bool Instantiated = false;
 
-        internal static GameObject _GO = null;
+        internal static GameObject TheOnlyGO = null;
+
         internal static GameObject GO
         {
             get
             {
-                // Creates only 1 game objects
-                if (_instantiated == false)
+                // Creates only 1 game object
+                if (Instantiated == false)
                 {
-                    _GO = new GameObject("[Singletons:SceneScoped]");
-                    _GO.AddComponent< SingletonInstance_SceneScoped_Resetter>();
-                    _instantiated = true;
+                    TheOnlyGO = new GameObject( "[Singletons:SceneScoped]");
+                    TheOnlyGO.AddComponent< SceneScopedSingleton_Resetter>();
+                    Instantiated = true;
                 }
                 
-                return _GO;
+                return TheOnlyGO;
             }
         }
 
         internal static void Reset()
         {
-            _instantiated = false;
-            _GO = null;
+            ResetSingletons();
+            Instantiated = false;
+            TheOnlyGO = null;
+        }
+
+        internal static void ResetSingletons()
+        {
+            var singletons = TheOnlyGO.GetComponents< IInitiable>();
+            foreach (var single in singletons)
+                single.OnDestroyCalled();
         }
     }
 
     // Reset Instance so that we will instantiate again the GO in the next scene
-    internal class SingletonInstance_SceneScoped_Resetter: MonoBehaviour
+    internal class SceneScopedSingleton_Resetter: MonoBehaviour
     {
         private void OnDestroy()
         {

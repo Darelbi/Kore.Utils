@@ -1,5 +1,6 @@
 // Author: Dario Oliveri
 // License Copyright 2016 (c) Dario Oliveri
+// https://github.com/Darelbi/Kore.Utils
 
 using Kore.Utils;
 using System.Collections;
@@ -9,28 +10,28 @@ namespace Kore.Coroutines
 {
     public class CoroutineEngine: ICoroutineEngine, ITickable
     {
-        private Method _method;
+        private Method method;
 
         public CoroutineEngine( Method method)
         {
-            _method = method;
+            this.method = method;
         }
 
         internal class Node
         {
-            public Node _next;
-            public IEnumerator enumerator;
+            public Node Next;
+            public IEnumerator Enumerator;
         }
 
-        Node _first = null;
-        Node _current;
-        Node _previous;
-        Node _last;
+        Node first = null;
+        Node current;
+        Node previous;
+        Node last;
         
         public void PushOverCurrent( IEnumerator nested)
         {
-            var toBeRestored = _current.enumerator;
-            _current.enumerator = WrapCoroutine( nested, toBeRestored);
+            var toBeRestored = current.Enumerator;
+            current.Enumerator = WrapCoroutine( nested, toBeRestored);
         }
 
         private IEnumerator WrapCoroutine( IEnumerator nested, IEnumerator toBeRestored)
@@ -38,14 +39,14 @@ namespace Kore.Coroutines
             while ( nested.MoveNext())
                 yield return nested.Current;
 
-            _current.enumerator = toBeRestored;
+            current.Enumerator = toBeRestored;
             yield return null;
         }
 
         public void RegisterCustomYield( ICustomYield customYield)
         {
-            var toBeRestored = _current.enumerator;
-            _current.enumerator = CustomYieldCoroutine( customYield, toBeRestored);
+            var toBeRestored = current.Enumerator;
+            current.Enumerator = CustomYieldCoroutine( customYield, toBeRestored);
         }
 
         private IEnumerator CustomYieldCoroutine( ICustomYield customYield, IEnumerator toBeRestored)
@@ -53,22 +54,22 @@ namespace Kore.Coroutines
             while (customYield.HasDone() == false)
             {
                 yield return null;
-                customYield.Update( _method);
+                customYield.Update( method);
             }
 
-            _current.enumerator = toBeRestored;
+            current.Enumerator = toBeRestored;
             yield return null;
         }
 
         public void ReplaceCurrentWith( IEnumerator nextState)
         {
-            _current.enumerator = nextState;
+            current.Enumerator = nextState;
         }
 
         private void RegisterLegacyCustomYield ( IEnumerator customYield)
         {
-            var toBeRestored = _current.enumerator;
-            _current.enumerator = LegacyCustomYieldCoroutine( customYield, toBeRestored);
+            var toBeRestored = current.Enumerator;
+            current.Enumerator = LegacyCustomYieldCoroutine( customYield, toBeRestored);
         }
 
         private IEnumerator LegacyCustomYieldCoroutine( IEnumerator customYield, IEnumerator toBeRestored)
@@ -76,34 +77,34 @@ namespace Kore.Coroutines
             while (customYield.MoveNext())
                 yield return null;
 
-            _current.enumerator = toBeRestored;
+            current.Enumerator = toBeRestored;
             yield return null;
         }
 
         public void Run( IEnumerator enumerator)
         {
             var node = new Node();
-            node.enumerator = enumerator;
+            node.Enumerator = enumerator;
 
-            if (_first == null)
+            if (first == null)
             {
-                _first = node;
-                _last = node;
+                first = node;
+                last = node;
                 return; 
             }
 
-            _last._next = node;
-            _last = node;
+            last.Next = node;
+            last = node;
         }
 
         public void Tick()
         {
-            _current = _first;
-            _previous = null;
+            current = first;
+            previous = null;
 
-            while(_current != null)
+            while(current != null)
             {
-                var e = _current.enumerator;
+                var e = current.Enumerator;
                 if (e.MoveNext())
                 {
                     if (e.Current != null)
@@ -124,8 +125,8 @@ namespace Kore.Coroutines
                             y.OnYield(this);
                         }
                     }
-                    _previous = _current;
-                    _current = _current._next;
+                    previous = current;
+                    current = current.Next;
                 }
                 else
                     RemoveCurrentNode();
@@ -135,18 +136,18 @@ namespace Kore.Coroutines
         // This one is bugged
         private void RemoveCurrentNode()
         {
-            var removed = _current;
+            var removed = current;
 
-            if (removed == _first)
-                _first = removed._next;
+            if (removed == first)
+                first = removed.Next;
 
-            if (removed == _last)
-                _last = _previous;
+            if (removed == last)
+                last = previous;
 
-            _current = removed._next; // may be null
+            current = removed.Next; // may be null
 
-            if(_previous != null)
-                _previous._next = _current;
+            if(previous != null)
+                previous.Next = current;
         }
     }
 }

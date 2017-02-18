@@ -15,7 +15,7 @@ namespace Kore.Coroutines.Examples
 
         private void RestartAnimation()
         {
-            Coroutine.Run( Example());
+            Koroutine.Run( Example());
         }
 
         IEnumerator Example()
@@ -35,7 +35,7 @@ namespace Kore.Coroutines.Examples
                     yield return null;
                 }
 
-                yield return Coroutine.Nested( ShotBullet( cubepos));
+                yield return Koroutine.Nested( ShotBullet( cubepos));
 
             }
 
