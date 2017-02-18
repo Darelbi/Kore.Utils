@@ -10,8 +10,8 @@ namespace Kore.Coroutines.Tests
     {
         void Start()
         {
-            Coroutine.Run(Test1());
-            Coroutine.Run(Test1());
+            Koroutine.Run( Test1());
+            Koroutine.Run( Test1());
         }
 
         void Update()
@@ -24,7 +24,7 @@ namespace Kore.Coroutines.Tests
             Debug.Log("A");
             yield return null;
             Debug.Log("B");
-            yield return Coroutine.Nested( Nested());
+            yield return Koroutine.Nested( Nested());
             Debug.Log("C");
             yield return null;
             Debug.Log("D");
@@ -35,7 +35,7 @@ namespace Kore.Coroutines.Tests
             Debug.Log("Nested");
             yield return null;
             Debug.Log("Nested");
-            yield return Coroutine.Nested(Nested2()); ;
+            yield return Koroutine.Nested( Nested2()); ;
             Debug.Log("Nested");
             yield return null;
             Debug.Log("Nested");

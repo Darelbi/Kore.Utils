@@ -17,7 +17,7 @@ namespace Kore.Coroutines.Examples
 
         private void RestartCoroutine()
         {
-            Coroutine.Run( Example());
+            Koroutine.Run( Example());
         }
 
         IEnumerator Example()

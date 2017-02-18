@@ -10,8 +10,8 @@ namespace Kore.Coroutines.Tests
     {
         void Start()
         {
-            Coroutine.Run(Test("eeee"));
-            Coroutine.Run(Test("ffff"));
+            Koroutine.Run(Test("eeee"));
+            Koroutine.Run(Test("ffff"));
         }
 
         IEnumerator Test( string prefix)

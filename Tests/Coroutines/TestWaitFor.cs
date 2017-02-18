@@ -8,7 +8,7 @@ namespace Kore.Coroutines.Tests
         // Use this for initialization
         void Start()
         {
-            Coroutine.Run( TestEnumerator());
+            Koroutine.Run( TestEnumerator());
         }
 
         private IEnumerator TestEnumerator()

@@ -1,5 +1,6 @@
 // Author: Dario Oliveri
 // License Copyright 2016 (c) Dario Oliveri
+// https://github.com/Darelbi/Kore.Utils
 
 using Kore.Utils;
 using System.Collections;
@@ -8,20 +9,32 @@ namespace Kore.Coroutines
 {
     public class StateCache
     {
-        CachedStateChangeYieldable _change;
+        CachedStateChangeYieldable change;
         bool executed;
 
         internal StateCache()
         {
-            _change = new CachedStateChangeYieldable();
+            change = new CachedStateChangeYieldable();
         }
 
+        /// <summary>
+        /// Prefer yielding this function instead of "null" to have a code that
+        /// is more clear about its intent
+        /// </summary>
+        /// <returns> A Yieldable object (you can "yield return" it).</returns>
         public IYieldable EnterState()
         {
             return null;
         }
 
-        public IYieldable EnterState( KoreCallback onEnterState)
+        /// <summary>
+        /// Prefer yielding this function instead of "null" to have a code that
+        /// is more clear about its intent, also the callback will be executed
+        /// only once when the state is entered
+        /// </summary>
+        /// <param name="onEnterState"> Callback (Executed immediatly).</param>
+        /// <returns> A Yieldable object (you can "yield return" it).</returns>
+        public IYieldable EnterState(KoreCallback onEnterState)
         {
             if (executed == false)
             {
@@ -32,19 +45,44 @@ namespace Kore.Coroutines
             return null;
         }
 
-        public IYieldable Change( IEnumerator nextState)
+        /// <summary>
+        /// Suspend (permanently stop) execution of current coroutine and start a new
+        /// one, this is equivalent to exiting a state and entering another state.
+        /// It also allow "EnterState" to trigger again its callback once it will be executed.
+        /// </summary>
+        /// <param name="nextState"> Next coroutine to be runned</param>
+        /// <returns> A Yieldable object (you can "yield return" it).</returns>
+        public IYieldable Change(IEnumerator nextState)
         {
             executed = false;
-            _change.NextState = nextState;
-            return _change;
+            change.NextState = nextState;
+            return change;
         }
 
+        /// <summary>
+        /// Suspend (permanently stop) execution of current coroutine and start a new
+        /// one, this is equivalent to exiting a state and entering another state.
+        /// It also allow "EnterState" to trigger again its callback once it will be executed.
+        /// This method also have callback
+        /// </summary>
+        /// <param name="nextState"> Next coroutine to be runned</param>
+        /// <param name="onExitState"> Callback (Executed immediatly).</param>
+        /// <returns> A Yieldable object (you can "yield return" it).</returns>
         public IYieldable Change( IEnumerator nextState, KoreCallback onExitState)
         {
             executed = false;
             onExitState();
-            _change.NextState = nextState;
-            return _change;
+            change.NextState = nextState;
+            return change;
+        }
+
+        /// <summary>
+        /// A simple notification mechanism that can be polled like a input
+        /// to detect state changes.
+        /// </summary>
+        public StateEvent Event()
+        {
+            return new StateEvent();
         }
     }
 
@@ -56,10 +94,38 @@ namespace Kore.Coroutines
         {
             engine.ReplaceCurrentWith( NextState);
         }
+    }
 
-        public void Reset()
+    public class StateEvent
+    {
+        private bool triggered = false;
+
+        /// <summary>
+        /// Trigger the event
+        /// </summary>
+        public void Trigger()
         {
-            NextState = null;
+            triggered = true;
+        }
+
+        /// <summary>
+        /// Check if event is triggered and eat the event.
+        /// </summary>
+        public static bool operator true( StateEvent t)
+        {
+            bool val = t.triggered;
+            t.triggered = false;
+            return val;
+        }
+
+        /// <summary>
+        /// Check if event is triggered and eat the event.
+        /// </summary>
+        public static bool operator false( StateEvent t)
+        {
+            bool val = !t.triggered;
+            t.triggered = false;
+            return val;
         }
     }
 }

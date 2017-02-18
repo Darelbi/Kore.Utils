@@ -1,3 +1,7 @@
+// Author: Dario Oliveri
+// License Copyright 2016 (c) Dario Oliveri
+// https://github.com/Darelbi/Kore.Utils
+
 using System.Collections.Generic;
 
 namespace Kore.Utils
@@ -8,7 +12,7 @@ namespace Kore.Utils
     /// created.
     /// </summary>
     /// <typeparam name="T">Poolable (Reset method) class with new operator</typeparam>
-    class MiniPool<T> where T: IPoolable, new()
+    public class MiniPool<T> where T: IPoolable, new()
     {
         // Stack is slightly faster than a Queue: I guess because Pushing/Popping
         // from a stack access the same memory location, thus has slightly more
@@ -16,6 +20,10 @@ namespace Kore.Utils
         // memory locations and eventually jump back when reach end of array).
         Stack<T> pool;
 
+        /// <summary>
+        /// Initialize the pool by preallocating a given amount of objects.
+        /// </summary>
+        /// <param name="initialCapacity"> Initial size</param>
         public MiniPool( int initialCapacity = 2)
         {
             pool = new Stack< T>( initialCapacity);
@@ -32,30 +40,15 @@ namespace Kore.Utils
                 (obj = new T()).Reset();
 
             else
-                obj = pool.Pop();                
+                obj = pool.Pop();
 
             return obj;
         }
 
         /// <summary>
-        /// There is no need to "Release" the "Current" object, however you cannot
-        /// Acquire another object as long as you are using "Current".
-        /// If in doubt DON'T USE THIS: it is just a optimization for few cases.
+        /// Release an item and reset it
         /// </summary>
-        public T Current()
-        {
-            if (pool.Count == 0)
-            {
-                T temp = new T();
-                temp.Reset();
-                pool.Push( temp);
-            }
-
-            T obj = pool.Peek();
-
-            return obj;
-        }
-
+        /// <param name="item"> reset is called immediatly to help GC, but don't rely on that behaviour</param>
         public void Release( T item)
         {
             item.Reset();

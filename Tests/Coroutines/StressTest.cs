@@ -8,7 +8,7 @@ namespace Kore.Coroutines.Tests
         // Use this for initialization
         void Start()
         {
-            Coroutine.Run( TestCoroutine( 300));
+            Koroutine.Run( TestCoroutine( 300));
         }
 
         // Update is called once per frame
@@ -16,8 +16,8 @@ namespace Kore.Coroutines.Tests
         {
             if (i > 0)
             {
-                Coroutine.Run( Parallel(2*i));
-                yield return Coroutine.Nested( TestCoroutine( i - 1) );
+                Koroutine.Run( Parallel(2*i));
+                yield return Koroutine.Nested( TestCoroutine( i - 1) );
             }
         }
 

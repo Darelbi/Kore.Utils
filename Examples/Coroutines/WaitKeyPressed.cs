@@ -13,11 +13,6 @@ namespace Kore.Coroutines.Examples
             engine.RegisterCustomYield( this);
         }
 
-        public void Reset()
-        {
-            
-        }
-
         public void Update( Method method)
         {
            

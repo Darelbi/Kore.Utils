@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using Kore.Utils;
 
 namespace Kore.Coroutines.Examples
 {
@@ -8,7 +7,11 @@ namespace Kore.Coroutines.Examples
     /// This example is to show how to reduce garbage to zero when using
     /// coroutines as StateMachines in order to stop doing pressure over
     /// the GarbageCollector. Look at Debug.Log When playing to see it
-    /// in action.
+    /// in action. 
+    /// 
+    /// You have just 2 Coroutines 
+    /// One for detecting Input
+    /// One is actually running the State machine (using 2 alternating IEnumerators)
     /// </summary>
     public class StateCacheExample : MonoBehaviour
     {
@@ -18,13 +21,14 @@ namespace Kore.Coroutines.Examples
         // Use this for initialization
         void Start()
         {
-            // Cache enumerators, NOTE: they can't be resetted (Microsoft choice)
+            // Cache enumerators, Garbage generate only when creating a IEnumerator
+            // so as long as we keep and reuse the same reference, we stop generating garbage.
             A = StateA();
             B = StateB();
-            Coroutine.Run( A); //Start State Machine
+            Koroutine.Run( A); //Start State Machine
 
-            // Also run a way to detect Input
-            Coroutine.Run( InputDetection());
+            // This coroutine is just for detecting a key pressed.
+            Koroutine.Run( InputDetection());
         }
 
         bool pressed = false;
@@ -43,7 +47,7 @@ namespace Kore.Coroutines.Examples
             if (pressed)
             {
                 pressed = false;
-                return true; //return true just ONCE
+                return true; //return true just ONCE (avoid continuos state change)
             }
             return false;
         }
@@ -55,10 +59,12 @@ namespace Kore.Coroutines.Examples
 
             while (true)
             {
+                // I Use Lambdas just for showing the state change with a LOG, actually you can use
+                // any callback you prefer (And lambdas are anyway optional).
                 yield return state.EnterState(() => Debug.Log("Entered A")); // Called once when state is entered
 
-                if (IsInputPressed())
-                    yield return state.Change( B, () => Debug.Log("Exited A")); // Called immediatly
+                if (IsInputPressed()) // Go to state B
+                    yield return state.Change( B, () => Debug.Log("Exited A"));
             }
         }
 
@@ -70,7 +76,7 @@ namespace Kore.Coroutines.Examples
             {
                 yield return state.EnterState(() => Debug.Log("Entered B"));
 
-                if (IsInputPressed())
+                if (IsInputPressed()) // Go to state A
                     yield return state.Change( A, () => Debug.Log("Exited B"));
             }
         }
